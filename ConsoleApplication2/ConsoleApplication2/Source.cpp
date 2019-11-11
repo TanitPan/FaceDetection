@@ -1,64 +1,14 @@
-//#include "opencv2/opencv.hpp"
-////#include "opencv2/objdetect.hpp"
-////#include "opencv2/highgui.hpp"
-////#include "opencv2/imgproc.hpp"
-//#include <iostream>
-//
-//using namespace std;
-//using namespace cv;
-//
-//
-//void detectAndDraw(Mat& img, CascadeClassifier& cascade, double scale)
-//{
-//	vector<Rect> faces;
-//	Mat gray;
-//	cvtColor(img, gray, COLOR_BGR2GRAY);
-//	cascade.detectMultiScale(gray, faces, 1.1, 2, 0 | CASCADE_SCALE_IMAGE, Size(30, 30));
-//	for (size_t i = 0; i < faces.size(); i++)
-//	{
-//
-//		Rect r = faces[i];
-//		Scalar color = Scalar(255, 0, 0);
-//		rectangle(img, cv::Point(cvRound(r.x * scale), cvRound(r.y * scale)), cv::Point(cvRound((r.x + r.width - 1) * scale), cvRound((r.y + r.height - 1) * scale)), color, 3, 8, 0);
-//	}
-//	imshow("Face Detector Module", img);
-//	cout << faces.size() << endl;
-//
-//}
-//
-//int main()
-//{
-//	CascadeClassifier cascade;
-//	Mat frame = imread("combo08.jpg");
-//	double scale = 1;
-//	//cascade.load("..\..\haarcascade_frontalcatface.xml");
-//	cascade.load("C:/opencv/sources/data/haarcascades/haarcascade_frontalface_default.xml");
-//
-//
-//	//imshow("Face Detection", frame);
-//	if (frame.empty())
-//	{
-//		cout << "failed to open or find lena.jpg" << endl;
-//		return -1;
-//	}
-//	else
-//		cout << "lena.jpg loaded ok" << endl;
-//
-//	detectAndDraw(frame, cascade, scale);
-//	waitKey(0);
-//	return 0;
-//}
-
 #include "opencv2/opencv.hpp"
 #include <iostream>
 
 using namespace std;
 using namespace cv;
 
+// Function to detect and draw at faces area
 void detectAndDraw(Mat& img, Mat& filter, CascadeClassifier& cascade, double scale)
 {
-	vector<Rect> faces;
-	Mat gray,newFil;
+	vector<Rect> faces;	// Vector for storing detected faces 
+	Mat gray, newFil;
 	cvtColor(img, gray, COLOR_BGR2GRAY);
 	cascade.detectMultiScale(gray, faces, 1.1, 2, 0 | CASCADE_SCALE_IMAGE, Size(30, 30));
 	for (size_t i = 0; i < faces.size(); i++)
@@ -71,7 +21,7 @@ void detectAndDraw(Mat& img, Mat& filter, CascadeClassifier& cascade, double sca
 		newFil.copyTo(img(Rect(r.x * scale, r.y * scale, newFil.cols, newFil.rows)));
 		
 	}
-	imshow("Face Detector Module", img);
+	imshow("Face Detector Module", img); // Display image on the chosen window
 	cout << faces.size() << endl;
 
 }
@@ -85,19 +35,40 @@ int main(int argc, char** argv)
 	CascadeClassifier cascade;
 	double scale = 1;
 	cascade.load("C:/opencv/sources/data/haarcascades/haarcascade_frontalface_default.xml");
+	filter = imread("C:/Users/TANIT/source/repos/Face detection 01/ConsoleApplication2/ConsoleApplication2/TestSample/test04.jpg");
+
+	// Uncomment this to detect faces from saved video
 	//VideoCapture cap("C:/Users/TANIT/source/repos/ConsoleApplication2/ConsoleApplication2/Wildlife.mp4");
-	filter = imread("C:/Users/TANIT/source/repos/ConsoleApplication2/ConsoleApplication2/test04.jpg");
-	VideoCapture cap(0);
+
+	VideoCapture cap(0); // Open the default webcam.
+
+	// Check for failure
 	if (cap.isOpened() == false)
 	{
-		cout << "Cannot open the web camera" << endl;
-		cin.get();
+		cout << "Cannot open the webcam" << endl;
+		cin.get(); // Wait for key press
 		return -1;
 	}
 	double dWidth = cap.get(CAP_PROP_FRAME_WIDTH);
 	double dHeight = cap.get(CAP_PROP_FRAME_HEIGHT);
 	cout << "Resolution of video: " << dWidth << "x" << dHeight << endl;
 
+	int frame_width = static_cast<int>(dWidth);
+	int frame_height = static_cast<int>(dHeight);
+
+	Size frame_size(frame_width, frame_height);
+	int frame_per_second = 10;
+
+	// Create and initialize VideoWriter obj
+	VideoWriter oVid("D:/VideoFile/recording01.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), frame_per_second, frame_size, true);
+
+	// Check for failure in initializing VideoWriter obj
+	if (oVid.isOpened() == false)
+	{
+		cout << "Fail to save the video to file" << endl;
+		cin.get();
+		return -1;
+	}
 
 	//cap.set(CAP_PROP_POS_MSEC, 300);
 	//double fps = cap.get(CAP_PROP_FPS);
@@ -110,24 +81,30 @@ int main(int argc, char** argv)
 	while (true)
 	{
 		Mat frame;
-		bool bSuccess = cap.read(frame);
+		bool bSuccess = cap.read(frame); // Read new frame from video recording
 
+		// Breaking the while loop if the frame can no longer be captured
 		if (bSuccess == false)
 		{
-			cout << "End of video reached" << endl;
+			cout << "Webcam is disconnected" << endl;
 			break;
 		}
 
+		oVid.write(frame);
 		//imshow(windowName, frame);
-		detectAndDraw(frame, filter, cascade, scale);
+		detectAndDraw(frame, filter, cascade, scale); // Function to detect faces and draw at that location
+
+
+		// If 'Esc' is pressed within 10ms, break the loop.
 		if (waitKey(10) == 27)
 		{
-			cout << "Esc key pressed. Stopping the video" << endl;
+			cout << "Esc key pressed. Stopping the recording" << endl;
 			break;
 		}
 		
 	
 	}
+	oVid.release();
 	//detectAndDraw(frame, filter, cascade, scale);
 	//waitKey(0);
 	cout << "Program completed successfully" << endl;
